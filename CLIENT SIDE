@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brooks Shoes - EST. 2005</title>
+    <!-- Importing Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Setting up custom theme colors -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brooks-green': {
+                            light: '#3a5a40',
+                            DEFAULT: '#344e41',
+                            dark: '#2a4035',
+                        },
+                        'brooks-gold': {
+                            light: '#eec643',
+                            DEFAULT: '#e6b71e',
+                            dark: '#d4a91a',
+                        },
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Custom styles for the app -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .nav-link {
+            @apply text-white hover:text-brooks-gold-light transition-colors duration-200;
+        }
+        .btn {
+            @apply px-6 py-2 rounded-lg font-semibold text-white transition-all duration-300;
+        }
+        .btn-gold {
+            @apply bg-brooks-gold hover:bg-brooks-gold-dark shadow-md hover:shadow-lg;
+        }
+        .btn-green {
+            @apply bg-brooks-green hover:bg-brooks-green-dark text-white;
+        }
+        /* Page transition styles (simple fade) */
+        #app-content {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Simple modal for messages */
+        #message-modal {
+            transition: opacity 0.3s, transform 0.3s;
+        }
+    </style>
+</head>
+<body class="text-gray-900">
+
+    <!-- Main application container -->
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header / Navigation -->
+        <header id="main-header" class="bg-brooks-green text-white shadow-lg sticky top-0 z-50">
+            <!-- Header content will be rendered by JavaScript -->
+        </header>
+
+        <!-- Page content will be injected here -->
+        <main id="app-content" class="flex-grow">
+            <!-- JS will render the current page here -->
+        </main>
+
+        <!-- Footer -->
+        <footer id="main-footer" class="bg-brooks-green-dark text-white p-10 mt-16">
+            <div class="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h5 class="text-xl font-bold mb-4 text-brooks-gold">Quick Links</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="nav-link" data-nav="home">Home</a></li>
+                        <li><a href="#" class="nav-link" data-nav="shop">Shop</a></li>
+                        <li><a href="#" class="nav-link" data-nav="about">About Us</a></li>
+                        <li><a href="#" class="nav-link" data-nav="contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="text-xl font-bold mb-4 text-brooks-gold">About Us</h5>
+                    <p class="text-gray-300">
+                        Serving shoe lovers since 2005. We provide the best quality footwear with an aesthetic you can't find anywhere else.
+                    </p>
+                </div>
+                <div>
+                    <h5 class="text-xl font-bold mb-4 text-brooks-gold">Subscribe</h5>
+                    <p class="text-gray-300 mb-4">Get updates on new arrivals and special offers.</p>
+                    <div class="flex">
+                        <input type="email" placeholder="Enter your email" class="flex-grow p-2 rounded-l-lg text-gray-900 focus:outline-none">
+                        <button class="btn btn-gold rounded-l-none">Subscribe</button>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center text-gray-400 border-t border-brooks-green-light mt-8 pt-6">
+                &copy; 2025 Brooks. EST 2005. All Rights Reserved.
+            </div>
+        </footer>
+    </div>
+
+    <!-- Message Modal -->
+    <div id="message-modal" class="fixed top-5 right-5 bg-brooks-green text-white p-4 rounded-lg shadow-xl translate-x-full opacity-0 z-50">
+        <span id="message-text"></span>
+    </div>
+
+    <!-- Main Application JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- STATE MANAGEMENT ---
+            const state = {
+                currentPage: 'home',
+                cart: [],
+                selectedProductId: null,
+            };
+
+            // --- MOCK PRODUCT DATA ---
+            const PRODUCTS = [
+                { id: 1, name: 'Classic Runner', brand: 'Brooks', price: 120.00, description: 'A timeless running shoe with modern comfort.', image: 'https://placehold.co/600x600/344e41/eec643?text=Brooks+Classic', related: [2, 3, 4] },
+                { id: 2, name: 'Urban Walker', brand: 'Adidas', price: 95.00, description: 'Perfect for city streets and daily commutes.', image: 'https://placehold.co/600x600/eec643/344e41?text=Urban+Walker', related: [1, 5, 6] },
+                { id: 3, name: 'Trail Blazer', brand: 'Nike', price: 150.00, description: 'Rugged, durable, and ready for any terrain.', image: 'https://placehold.co/600x600/344e41/eec643?text=Trail+Blazer', related: [4, 7, 8] },
+                { id: 4, name: 'Aesthetic Slider', brand: 'Asics', price: 60.00, description: 'Comfort and style for a relaxed day.', image: 'https://placehold.co/600x600/eec643/344e41?text=Aesthetic+Slider', related: [1, 2, 5] },
+                { id: 5, name: 'Retro Samba', brand: 'Adidas', price: 110.00, description: 'An iconic silhouette, reborn.', image: 'https://placehold.co/600x600/344e41/eec643?text=Retro+Samba', related: [6, 7, 1] },
+                { id: 6, name: 'Downshifter', brand: 'Nike', price: 75.00, description: 'Lightweight and minimal for a fast feel.', image: 'https://placehold.co/600x600/eec643/344e41?text=Downshifter', related: [8, 3, 2] },
+                { id: 7, name: 'Gold Standard', brand: 'Brooks', price: 180.00, description: 'Premium materials for a luxurious feel.', image: 'https://placehold.co/600x600/344e41/eec643?text=Gold+Standard', related: [1, 4, 8] },
+                { id: 8, name: 'Green Pace', brand: 'Brooks', price: 135.00, description: 'Eco-friendly materials without compromising performance.', image: 'https://placehold.co/600x600/eec643/344e41?text=Green+Pace', related: [2, 5, 7] },
+            ];
+
+            // --- DOM SELECTORS ---
+            const app = document.getElementById('app');
+            const header = document.getElementById('main-header');
+            const content = document.getElementById('app-content');
+            const messageModal = document.getElementById('message-modal');
+            const messageText = document.getElementById('message-text');
+
+            // --- LOGO URL ---
+            // This is the URL from the first logo you requested.
+            const LOGO_URL = 'http://googleusercontent.com/image_generation_content/0';
+
+            // --- UTILITY FUNCTIONS ---
+            
+            /**
+             * Shows a brief message modal
+             * @param {string} message - The text to display
+             */
+            function showMessage(message) {
+                messageText.textContent = message;
+                messageModal.classList.remove('translate-x-full', 'opacity-0');
+                messageModal.classList.add('translate-x-0', 'opacity-100');
+                
+                setTimeout(() => {
+                    messageModal.classList.add('translate-x-full', 'opacity-0');
+                    messageModal.classList.remove('translate-x-0', 'opacity-100');
+                }, 3000);
+            }
+
+            /**
+             * Calculates the total number of items in the cart
+             * @returns {number}
+             */
+            function getCartItemCount() {
+                return state.cart.reduce((total, item) => total + item.quantity, 0);
+            }
+
+            /**
+             * Calculates cart totals
+             * @returns {object} - { subtotal, shipping, taxes, grandTotal }
+             */
+            function getCartTotals() {
+                const subtotal = state.cart.reduce((total, cartItem) => {
+                    const product = PRODUCTS.find(p => p.id === cartItem.id);
+                    return total + (product.price * cartItem.quantity);
+                }, 0);
+
+                const shipping = subtotal > 0 ? 5.00 : 0.00; // $5 shipping, free if cart is empty
+                const taxes = subtotal * 0.08; // 8% tax
+                const grandTotal = subtotal + shipping + taxes;
+
+                return {
+                    subtotal: subtotal.toFixed(2),
+                    shipping: shipping.toFixed(2),
+                    taxes: taxes.toFixed(2),
+                    grandTotal: grandTotal.toFixed(2)
+                };
+            }
+
+            // --- CART LOGIC ---
+            
+            /**
+             * Adds a product to the cart
+             * @param {number} productId
+             * @param {number} quantity
+             */
+            function addToCart(productId, quantity) {
+                const existingItem = state.cart.find(item => item.id === productId);
+                if (existingItem) {
+                    existingItem.quantity += quantity;
+                } else {
+                    state.cart.push({ id: productId, quantity: quantity });
+                }
+                showMessage('Added to cart!');
+                renderHeader(); // Re-render header to update cart count
+            }
+
+            /**
+             * Removes a product from the cart
+             * @param {number} productId
+             */
+            function removeFromCart(productId) {
+                state.cart = state.cart.filter(item => item.id !== productId);
+                showMessage('Item removed from cart.');
+                renderHeader(); // Update cart count
+                if (state.currentPage === 'cart') {
+                    renderPage(); // Re-render cart page
+                }
+            }
+
+            /**
+             * Updates the quantity of a cart item
+             * @param {number} productId
+             * @param {number} quantity
+             */
+            function updateCartQuantity(productId, quantity) {
+                if (quantity < 1) {
+                    removeFromCart(productId);
+                    return;
+                }
+                const item = state.cart.find(item => item.id === productId);
+                if (item) {
+                    item.quantity = quantity;
+                }
+                if (state.currentPage === 'cart') {
+                    renderPage(); // Re-render cart page to update totals
+                }
+                renderHeader(); // Update cart count
+            }
+
+            // --- RENDER FUNCTIONS ---
+
+            /**
+             * Renders the main header
+             */
+            function renderHeader() {
+                const cartItemCount = getCartItemCount();
+                header.innerHTML = `
+                    <nav class="container mx-auto p-4 flex justify-between items-center">
+                        <!-- Logo -->
+                        <a href="#" class="cursor-pointer" data-nav="home">
+                            <img src="${LOGO_URL}" alt="Brooks Logo" class="h-16 w-auto" onerror="this.onerror=null; this.alt='Brooks Logo'; this.parentElement.innerHTML = '<span class=\\'text-2xl font-bold text-brooks-gold\\'>BROOKS</span>';">
+                        </a>
+
+                        <!-- Navigation Links -->
+                        <div class="hidden md:flex space-x-8">
+                            <a href="#" class="nav-link text-lg font-medium" data-nav="home">Home</a>
+                            <a href="#" class="nav-link text-lg font-medium" data-nav="shop">Shop</a>
+                            <a href="#" class="nav-link text-lg font-medium" data-nav="about">About</a>
+                            <a href="#" class="nav-link text-lg font-medium" data-nav="contact">Contact</a>
+                        </div>
+
+                        <!-- Cart Icon -->
+                        <div class="relative">
+                            <a href="#" class="text-white hover:text-brooks-gold-light transition-colors duration-200" data-nav="cart">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                ${cartItemCount > 0 ? `<span class="absolute -top-2 -right-2 bg-brooks-gold text-brooks-green-dark text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">${cartItemCount}</span>` : ''}
+                            </a>
+                        </div>
+                    </nav>
+                `;
+            }
+            
+            /**
+             * Renders a single product card
+             * @param {object} product
+             * @returns {string} HTML string
+             */
+            function renderProductCard(product) {
+                return `
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col transition-all duration-300 hover:shadow-2xl">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-64 object-cover cursor-pointer" data-nav="product" data-id="${product.id}">
+                        <div class="p-6 flex-grow flex flex-col">
+                            <h3 class="text-xl font-semibold mb-2">${product.name}</h3>
+                            <p class="text-lg text-brooks-green font-bold mb-4">$${product.price.toFixed(2)}</p>
+                            <div class="mt-auto">
+                                <button class="btn btn-green w-full" data-action="add-to-cart" data-id="${product.id}">Add to Cart</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            /**
+             * Renders the Home Page
+             */
+            function renderHomePage() {
+                content.innerHTML = `
+                    <!-- 1. Large Sectional Banner -->
+                    <div class="h-[60vh] bg-cover bg-center flex items-center justify-center text-center text-white" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://placehold.co/1600x900/344e41/eec643?text=Brooks+Banner');">
+                        <div class="p-6 rounded-lg">
+                            <h1 class="text-5xl md:text-7xl font-bold mb-4 text-brooks-gold-light">New Arrivals</h1>
+                            <p class="text-xl md:text-2xl mb-8">Aesthetic. Comfort. Performance.</p>
+                            <!-- Call to Action Button -->
+                            <button class="btn btn-gold text-xl px-10 py-3" data-nav="shop">Shop Now</button>
+                        </div>
+                    </div>
+
+                    <!-- 2. Product Categories -->
+                    <section class="container mx-auto px-6 py-16">
+                        <h2 class="text-3xl font-bold text-center mb-10">Product Categories</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="h-64 rounded-lg shadow-lg bg-cover bg-center flex items-center justify-center text-white text-3xl font-bold cursor-pointer" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://placehold.co/600x400/344e41/eec643?text=Men');" data-nav="shop">
+                                Men's
+                            </div>
+                            <div class="h-64 rounded-lg shadow-lg bg-cover bg-center flex items-center justify-center text-white text-3xl font-bold cursor-pointer" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://placehold.co/600x400/344e41/eec643?text=Women');" data-nav="shop">
+                                Women's
+                            </div>
+                            <div class="h-64 rounded-lg shadow-lg bg-cover bg-center flex items-center justify-center text-white text-3xl font-bold cursor-pointer" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://placehold.co/600x400/344e41/eec643?text=Kids');" data-nav="shop">
+                                Kids'
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 3. Featured Products -->
+                    <section class="container mx-auto px-6 py-16 bg-gray-50 rounded-lg">
+                        <h2 class="text-3xl font-bold text-center mb-10">Featured Products</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            ${PRODUCTS.slice(0, 4).map(renderProductCard).join('')}
+                        </div>
+                    </section>
+                `;
+            }
+
+            /**
+             * Renders the Shop Page (Product Listing)
+             */
+            function renderShopPage() {
+                content.innerHTML = `
+                    <div class="container mx-auto px-6 py-12">
+                        <h1 class="text-4xl font-bold mb-8">Shop All Products</h1>
+                        <div class="flex flex-col md:flex-row gap-8">
+                            <!-- Filters -->
+                            <aside class="w-full md:w-1/4">
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    <h3 class="text-xl font-semibold mb-4">Filters</h3>
+                                    <!-- Category Filter -->
+                                    <div class="mb-6">
+                                        <h4 class="font-bold mb-2">Category</h4>
+                                        <ul class="space-y-1">
+                                            <li><label class="flex items-center"><input type="checkbox" class="mr-2"> Men</label></li>
+                                            <li><label class="flex items-center"><input type="checkbox" class="mr-2"> Women</label></li>
+                                            <li><label class="flex items-center"><input type="checkbox" class="mr-2"> Kids</label></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Brand Filter -->
+                                    <div class="mb-6">
+                                        <h4 class="font-bold mb-2">Brand</h4>
+                                        <ul class="space-y-1">
+                                            <li><label class="flex items-center"><input type="checkbox" class="mr-2"> Brooks</label></li>
+                                            <li><label class="flex items-center"><input type="checkbox" class="mr-2"> Adidas</label></li>
+                                            <li><label class="flex items-center"><input type="checkbox" class="mr-2"> Nike</label></li>
+                                            <li><label class="flex items-center"><input type="checkbox" class="mr-2"> Asics</label></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Price Filter -->
+                                    <div>
+                                        <h4 class="font-bold mb-2">Price</h4>
+                                        <input type="range" min="50" max="200" class="w-full">
+                                        <div class="flex justify-between text-sm">
+                                            <span>$50</span>
+                                            <span>$200</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </aside>
+
+                            <!-- Product Grid -->
+                            <main class="w-full md:w-3/4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    ${PRODUCTS.map(renderProductCard).join('')}
+                                </div>
+                            </main>
+                        </div>
+                    </div>
+                `;
+            }
+
+            /**
+             * Renders the Product Detail Page
+             */
+            function renderProductPage(productId) {
+                const product = PRODUCTS.find(p => p.id === productId);
+                if (!product) {
+                    renderPage('shop'); // Go back to shop if product not found
+                    return;
+                }
+
+                const relatedProducts = product.related
+                    .map(id => PRODUCTS.find(p => p.id === id))
+                    .filter(Boolean); // Filter out any undefineds
+
+                content.innerHTML = `
+                    <div class="container mx-auto px-6 py-12">
+                        <div class="bg-white p-8 rounded-lg shadow-xl flex flex-col md:flex-row gap-12">
+                            <!-- Image Gallery -->
+                            <div class="w-full md:w-1/2">
+                                <img src="${product.image}" alt="${product.name}" class="w-full rounded-lg shadow-md mb-4">
+                                <div class="grid grid-cols-4 gap-4">
+                                    <img src="https://placehold.co/100x100/344e41/eec643?text=Thumb+1" alt="Thumbnail" class="rounded-md cursor-pointer border-2 border-brooks-gold">
+                                    <img src="https://placehold.co/100x100/344e41/eec643?text=Thumb+2" alt="Thumbnail" class="rounded-md cursor-pointer border-2 border-transparent hover:border-brooks-gold">
+                                    <img src="https://placehold.co/100x100/344e41/eec643?text=Thumb+3" alt="Thumbnail" class="rounded-md cursor-pointer border-2 border-transparent hover:border-brooks-gold">
+                                    <img src="https://placehold.co/100x100/344e41/eec643?text=Thumb+4" alt="Thumbnail" class="rounded-md cursor-pointer border-2 border-transparent hover:border-brooks-gold">
+                                </div>
+                            </div>
+
+                            <!-- Product Info -->
+                            <div class="w-full md:w-1/2">
+                                <h1 class="text-4xl font-bold mb-2">${product.name}</h1>
+                                <p class="text-xl text-gray-600 mb-4">${product.brand}</p>
+                                <p class="text-4xl text-brooks-green font-bold mb-6">$${product.price.toFixed(2)}</p>
+                                
+                                <!-- Quantity and Add to Cart -->
+                                <div class="flex items-center mb-6">
+                                    <label for="quantity" class="font-semibold mr-4">QTY</label>
+                                    <input type="number" id="quantity-input" value="1" min="1" class="w-20 p-2 border rounded-lg text-center">
+                                    <button class="btn btn-green ml-4 flex-grow" data-action="add-to-cart-detail" data-id="${product.id}">Add to Cart</button>
+                                </div>
+
+                                <!-- Product Description -->
+                                <div class="mb-6">
+                                    <h3 class="text-xl font-semibold mb-2">Product Description</h3>
+                                    <p class="text-gray-700">${product.description} Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                                </div>
+
+                                <!-- Reviews -->
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-2">Reviews</h3>
+                                    <div class="flex items-center">
+                                        <!-- Star icons -->
+                                        ${[...Array(5)].map((_, i) => `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ${i < 4 ? 'text-brooks-gold' : 'text-gray-300'}" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>`).join('')}
+                                        <span class="ml-2 text-gray-600">(120 reviews)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Related Products -->
+                        <section class="mt-16">
+                            <h2 class="text-3xl font-bold text-center mb-10">Related Products</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                ${relatedProducts.map(renderProductCard).join('')}
+                            </div>
+                        </section>
+                    </div>
+                `;
+            }
+
+            /**
+             * Renders the Shopping Cart Page
+             */
+            function renderCartPage() {
+                if (state.cart.length === 0) {
+                    content.innerHTML = `
+                        <div class="container mx-auto px-6 py-20 text-center">
+                            <h1 class="text-4xl font-bold mb-6">Your Cart is Empty</h1>
+                            <p class="text-xl text-gray-600 mb-8">Looks like you haven't added any shoes yet.</p>
+                            <button class="btn btn-gold text-xl px-10 py-3" data-nav="shop">Start Shopping</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const totals = getCartTotals();
+                
+                content.innerHTML = `
+                    <div class="container mx-auto px-6 py-12">
+                        <h1 class="text-4xl font-bold mb-8">Shopping Cart</h1>
+                        <div class="flex flex-col lg:flex-row gap-12">
+                            <!-- Cart Items -->
+                            <div class="w-full lg:w-2/3">
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    ${state.cart.map(cartItem => {
+                                        const product = PRODUCTS.find(p => p.id === cartItem.id);
+                                        return `
+                                        <div class="flex flex-col md:flex-row items-center justify-between border-b py-6 last:border-b-0">
+                                            <div class="flex items-center mb-4 md:mb-0">
+                                                <img src="${product.image}" alt="${product.name}" class="w-24 h-24 object-cover rounded-lg mr-6">
+                                                <div>
+                                                    <h3 class="text-xl font-semibold">${product.name}</h3>
+                                                    <button class="text-sm text-red-600 hover:text-red-800" data-action="remove-from-cart" data-id="${product.id}">Remove</button>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center space-x-4">
+                                                <input type="number" value="${cartItem.quantity}" min="1" class="w-20 p-2 border rounded-lg text-center" data-action="update-quantity" data-id="${product.id}">
+                                                <p class="text-lg font-semibold w-24 text-right">$${(product.price * cartItem.quantity).toFixed(2)}</p>
+                                            </div>
+                                        </div>
+                                        `;
+                                    }).join('')}
+                                    <button class="btn btn-green mt-6" data-nav="shop">Continue Shopping</button>
+                                </div>
+                            </div>
+
+                            <!-- Order Summary -->
+                            <div class="w-full lg:w-1/3">
+                                <div class="bg-white p-8 rounded-lg shadow-lg sticky top-32">
+                                    <h2 class="text-2xl font-bold mb-6 border-b pb-4">Order Summary</h2>
+                                    <div class="space-y-4">
+                                        <div class="flex justify-between text-lg">
+                                            <span>Subtotal</span>
+                                            <span>$${totals.subtotal}</span>
+                                        </div>
+                                        <div class="flex justify-between text-lg">
+                                            <span>Shipping Estimate</span>
+                                            <span>$${totals.shipping}</span>
+                                        </div>
+                                        <div class="flex justify-between text-lg">
+                                            <span>Taxes</span>
+                                            <span>$${totals.taxes}</span>
+                                        </div>
+                                        <div class="flex justify-between text-2xl font-bold text-brooks-green border-t pt-4 mt-4">
+                                            <span>Grand Total</span>
+                                            <span>$${totals.grandTotal}</span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-gold w-full mt-8 text-lg" data-nav="checkout">Proceed to Checkout</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            /**
+             * Renders the Checkout Page
+             */
+            function renderCheckoutPage() {
+                if (state.cart.length === 0) {
+                    renderPage('shop'); // Can't check out with an empty cart
+                    return;
+                }
+
+                const totals = getCartTotals();
+
+                content.innerHTML = `
+                    <div class="container mx-auto px-6 py-12">
+                        <h1 class="text-4xl font-bold mb-8">Checkout</h1>
+                        <div class="flex flex-col lg:flex-row gap-12">
+                            <!-- Shipping & Payment Forms -->
+                            <div class="w-full lg:w-2/3">
+                                <div class="bg-white p-8 rounded-lg shadow-lg">
+                                    <!-- 1. Shipping Information -->
+                                    <section class="mb-8">
+                                        <h2 class="text-2xl font-semibold mb-6 border-b pb-3">1. Shipping Information</h2>
+                                        <form class="space-y-4">
+                                            <div>
+                                                <label for="full-name" class="block font-medium mb-1">Full Name</label>
+                                                <input type="text" id="full-name" class="w-full p-2 border rounded-lg">
+                                            </div>
+                                            <div>
+                                                <label for="address" class="block font-medium mb-1">Address</label>
+                                                <input type="text" id="address" class="w-full p-2 border rounded-lg">
+                                            </div>
+                                            <div>
+                                                <label for="email" class="block font-medium mb-1">Email Address</label>
+                                                <input type="email" id="email" class="w-full p-2 border rounded-lg">
+                                            </div>
+                                        </form>
+                                    </section>
+
+                                    <!-- 2. Payment Method -->
+                                    <section>
+                                        <h2 class="text-2xl font-semibold mb-6 border-b pb-3">2. Payment Method</h2>
+                                        <form class="space-y-4">
+                                            <div class="flex items-center">
+                                                <input type="radio" id="credit-card" name="payment" class="mr-2" checked>
+                                                <label for="credit-card" class="font-medium">Credit Card</label>
+                                            </div>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label for="card-number" class="block font-medium mb-1">Card Number</label>
+                                                    <input type="text" id="card-number" class="w-full p-2 border rounded-lg">
+                                                </div>
+                                                <div>
+                                                    <label for="card-name" class="block font-medium mb-1">Name on Card</label>
+                                                    <input type="text" id="card-name" class="w-full p-2 border rounded-lg">
+                                                </div>
+                                                <div>
+                                                    <label for="expiration" class="block font-medium mb-1">Expiration (MM/YY)</label>
+                                                    <input type="text" id="expiration" class="w-full p-2 border rounded-lg">
+                                                </div>
+                                                <div>
+                                                    <label for="cvv" class="block font-medium mb-1">CVV</label>
+                                                    <input type="text" id="cvv" class="w-full p-2 border rounded-lg">
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center mt-4">
+                                                <input type="radio" id="paypal" name="payment" class="mr-2">
+                                                <label for="paypal" class="font-medium">PayPal</label>
+                                            </div>
+                                        </form>
+                                    </section>
+                                </div>
+                            </div>
+
+                            <!-- Order Summary -->
+                            <div class="w-full lg:w-1/3">
+                                <div class="bg-white p-8 rounded-lg shadow-lg sticky top-32">
+                                    <h2 class="text-2xl font-bold mb-6 border-b pb-4">Order Summary</h2>
+                                    <div class="space-y-3 max-h-60 overflow-y-auto mb-4">
+                                        ${state.cart.map(cartItem => {
+                                            const product = PRODUCTS.find(p => p.id === cartItem.id);
+                                            return `
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <p class="font-semibold">${product.name}</p>
+                                                    <p class="text-sm text-gray-600">Qty: ${cartItem.quantity}</p>
+                                                </div>
+                                                <p class="font-semibold">$${(product.price * cartItem.quantity).toFixed(2)}</p>
+                                            </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                    <div class="space-y-4 border-t pt-4">
+                                        <div class="flex justify-between text-lg">
+                                            <span>Subtotal</span>
+                                            <span>$${totals.subtotal}</span>
+                                        </div>
+                                        <div class="flex justify-between text-lg">
+                                            <span>Shipping</span>
+                                            <span>$${totals.shipping}</span>
+                                        </div>
+                                        <div class="flex justify-between text-lg">
+                                            <span>Taxes</span>
+                                            <span>$${totals.taxes}</span>
+                                        </div>
+                                        <div class="flex justify-between text-2xl font-bold text-brooks-green border-t pt-4 mt-4">
+                                            <span>Grand Total</span>
+                                            <span>$${totals.grandTotal}</span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-gold w-full mt-8 text-lg" data-action="place-order">Place Order</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            /**
+             * Renders simple pages for About and Contact
+             */
+            function renderSimplePage(title, text) {
+                content.innerHTML = `
+                    <div class="container mx-auto px-6 py-20">
+                        <div class="bg-white p-12 rounded-lg shadow-xl max-w-3xl mx-auto">
+                            <h1 class="text-4xl font-bold mb-6">${title}</h1>
+                            <p class="text-lg text-gray-700 leading-relaxed">${text}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // --- PAGE ROUTER ---
+            
+            /**
+             * Main render function to switch pages
+             */
+            function renderPage() {
+                // Scroll to top on page change
+                window.scrollTo(0, 0);
+
+                switch (state.currentPage) {
+                    case 'home':
+                        renderHomePage();
+                        break;
+                    case 'shop':
+                        renderShopPage();
+                        break;
+                    case 'product':
+                        renderProductPage(state.selectedProductId);
+                        break;
+                    case 'cart':
+                        renderCartPage();
+                        break;
+                    case 'checkout':
+                        renderCheckoutPage();
+                        break;
+                    case 'about':
+                        renderSimplePage('About Us', 'Founded in 2005, Brooks has been at the forefront of combining aesthetic style with premium comfort. Our mission is to provide footwear that not only looks good but feels great, whether you\'re on the track, on the street, or on the couch.');
+                        break;
+                    case 'contact':
+                        renderSimplePage('Contact Us', 'Get in touch with us! <br><br> Email: support@brooks.com <br> Phone: (555) 123-4567 <br> Address: 123 Shoe Lane, Boston, MA 02101');
+                        break;
+                    default:
+                        renderHomePage();
+                }
+            }
+
+            // --- NAVIGATION ---
+            
+            /**
+             * Handles navigation events
+             * @param {string} page - The page to navigate to
+             * @param {number} [id] - Optional product ID
+             */
+            function navigateTo(page, id = null) {
+                state.currentPage = page;
+                state.selectedProductId = id;
+                renderPage();
+            }
+
+
+            // --- EVENT LISTENERS ---
+            
+            /**
+             * Main event listener for clicks
+             */
+            app.addEventListener('click', (e) => {
+                const target = e.target.closest('[data-nav], [data-action]');
+                if (!target) return;
+
+                const { nav, action, id } = target.dataset;
+
+                // Navigation
+                if (nav) {
+                    e.preventDefault();
+                    navigateTo(nav, parseInt(id));
+                }
+
+                // Actions
+                if (action) {
+                    e.preventDefault();
+                    const productId = parseInt(id);
+
+                    switch (action) {
+                        case 'add-to-cart':
+                            addToCart(productId, 1);
+                            break;
+                        
+                        case 'add-to-cart-detail':
+                            const qtyInput = document.getElementById('quantity-input');
+                            const quantity = parseInt(qtyInput.value) || 1;
+                            addToCart(productId, quantity);
+                            break;
+                        
+                        case 'remove-from-cart':
+                            removeFromCart(productId);
+                            break;
+
+                        case 'place-order':
+                            showMessage('Thank you for your order! (This is a demo)');
+                            state.cart = [];
+                            renderHeader();
+                            navigateTo('home');
+                            break;
+                    }
+                }
+            });
+
+            /**
+             * Event listener for cart quantity changes
+             */
+            app.addEventListener('change', (e) => {
+                const target = e.target.closest('[data-action="update-quantity"]');
+                if (!target) return;
+
+                const productId = parseInt(target.dataset.id);
+                const quantity = parseInt(target.value);
+                
+                updateCartQuantity(productId, quantity);
+            });
+
+
+            // --- INITIALIZATION ---
+            renderHeader();
+            renderPage(); // Render the initial page
+        });
+    </script>
+</body>
+</html>
